@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+
+set -eu -o pipefail
+
+usage() {
+    name=$(basename "$0")
+
+    # Note: convention used is max line length of 80 chars.
+    echo $"Usage: $name [OPTIONS...] [--] IMAGE [ARGS...]
+$name - Runs a given container image in a given directory (defaults to current
+directory)
+
+OPTIONS
+  -s, --src    SRC_PATH   The directory to mount inside the container.
+                          Will be mounted under DST_PATH.
+
+                          Default: \$PWD
+
+  -d, --dest   DEST_PATH  The location where the SRC_PATH directory will be
+                          mounted inside the remote container.
+                          Will be set as the working directory inside the
+                          container.
+
+                          Default: /work-dir
+
+  --privileged            Run the container as privileged (passes
+                          '--privileged' to 'docker run')
+
+  --entrypoint COMMAND  The entrypoint to pass to 'docker run'.
+
+  --pull       POLICY   The pull policy to pass to 'docker run'.
+                        Options: always, missing, never, newer
+                                 (default: 'missing')
+
+                        Note: the actual options may vary between docker
+                              backends (e.g., docker vs podman).
+
+  --                    Indicates the end of the options for $name.
+
+POSITIONAL ARGUMENTS
+  ARGS    The arguments to pass to 'docker run'.
+
+EXAMPLES
+    $name alpine ls .
+    $name alpine sh -uxc 'ls -l \"$PWD\" ; cat /etc/os-release'
+    $name alpine --src ~/Downloads -- ls -l .
+    $name alpine --dest /foo -- ls -l /foo
+    $name alpine:latest@sha256:d34db33f[...] -- ls -l /foo"
+}
+
+
+get_docker() {
+    supported_commands=( docker, podman )
+
+    for cmd in "${supported_commands[@]}"; do
+        if command -v "$cmd"; then
+            # If found, stop searching.
+            #
+            # 'command -v' will print the command path which acts
+            #  as our return value.
+            return 0
+        fi
+    done
+
+    echo "Couldn't find a support docker command in PATH." >&2
+    echo "Support commands: ${supported_commands[*]}" >&2
+    echo "Make sure docker is installed." >&2
+    exit 1
+}
+
+
+# Peeks at the next argument, exits with 1 if unset.
+peek_next() {
+    if [[ -z "${2-}" ]]; then
+        echo "Missing argument for $1" >&2
+        usage >&2 
+        exit 1
+    fi
+}
+
+image=
+docker_run_args=( )
+src_path="$PWD"
+dest_path=
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -s | --src)
+            peek_next "$@"
+            src_path="$2"
+            shift 2
+            ;;
+        -d | --dest)
+            peek_next "$@"
+            dest_path="$2"
+            shift 2
+            ;;
+        --privileged)
+            docker_run_args+=("--privileged")
+            shift
+            ;;
+        --pull)
+            peek_next "$@"
+            docker_run_args+=("--pull=$2")
+            shift 2
+            ;;
+        --entrypoint)
+            peek_next "$@"
+            docker_run_args+=("--entrypoint=$2")
+            shift 2
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        --)
+            # Stop parsing options here
+            shift # consume the '--'
+
+            if [[ -n "$image" ]]; then
+                # If the image was already provided, then don't consume the
+                # next argument.
+                break
+            elif [[ -z "${1-}" ]]; then
+                # We expect the user to instantly provide the image after '--'
+                echo "Missing required argument: IMAGE" >&2
+                usage >&2
+                exit 1
+            fi
+
+            # Consume the image and stop processing options.
+            image="$1"
+            shift
+            break
+            ;;
+        --*)
+            # If we reach here, then we didn't find any matching option.
+            echo "Unknown option: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+        *)
+            image="$1"
+            shift
+
+            # Stop processing, a positional argument was passed thus
+            # we assume everything else goes to 'docker run'
+            break
+            ;;
+    esac
+done
+
+if [[ -z "$image" ]]; then
+    echo "Missing argument: IMAGE" >&2
+    usage >&2
+    exit 1
+fi
+
+# Retrieve a docker cli command (e.g., /usr/bin/docker, or /usr/bin/podman)
+docker=$(get_docker)
+
+# Use full path to avoid relative directories (may not play well
+# with some docker CLIs otherwise)
+src_path=$(readlink -f "$src_path")
+
+# Set the default destination path if unset.
+# Use the same as the source path for user-friendliness.
+if [[ -z "$dest_path" ]]; then
+    dest_path="$src_path"
+fi
+
+"$docker" run --rm -it \
+    "${docker_run_args[@]}" \
+    -v "$src_path":"$dest_path" \
+    --workdir "$dest_path" \
+    "$image" \
+    "$@"
+

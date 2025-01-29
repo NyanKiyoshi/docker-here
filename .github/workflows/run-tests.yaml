@@ -1,0 +1,44 @@
+name: Run Tests
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - .github/workflows/run-tests.yaml
+      - tests/**
+      - docker-here
+      - **/*.sh
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    paths:
+      - .github/workflows/run-tests.yaml
+      - tests/**
+      - docker-here
+      - **/*.sh
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        - macos-latest
+        - ubuntu-latest
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}
+
+    # Give a large enough value as MacOS runners can be slow.
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Run Tests
+        working-directory: ./tests
+        run: make
+
