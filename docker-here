@@ -13,7 +13,7 @@ directory)
 
 OPTIONS
   -s, --src    SRC_PATH   The directory to mount inside the container.
-                          Will be mounted under DST_PATH.
+                          Will be mounted under DEST_PATH.
 
                           Default: \$PWD
 
@@ -22,7 +22,7 @@ OPTIONS
                           Will be set as the working directory inside the
                           container.
 
-                          Default: /work-dir
+                          Default: \$PWD
 
   --privileged            Run the container as privileged (passes
                           '--privileged' to 'docker run')
@@ -70,8 +70,8 @@ get_docker() {
         fi
     done
 
-    echo "Couldn't find a support docker command in PATH." >&2
-    echo "Support commands: ${supported_commands[*]}" >&2
+    echo "Couldn't find a supported 'docker' command in PATH." >&2
+    echo "Supported commands: ${supported_commands[*]}" >&2
     echo "Make sure docker is installed." >&2
     exit 1
 }
@@ -173,7 +173,7 @@ else
     docker=$(get_docker)
 fi
 
-# If we are running inside TTY, then add '-ti' to the 'docker run' arguments.
+# If we are running inside a TTY, then add '-ti' to the 'docker run' arguments.
 if [[ -t 1 ]]; then
     docker_run_args+=( -ti )
 fi
