@@ -83,7 +83,7 @@ directory)
 
 OPTIONS
   -s, --src    SRC_PATH   The directory to mount inside the container.
-                          Will be mounted under DST_PATH.
+                          Will be mounted under DEST_PATH.
 
                           Default: $PWD
 
@@ -92,7 +92,7 @@ OPTIONS
                           Will be set as the working directory inside the
                           container.
 
-                          Default: /work-dir
+                          Default: $PWD
 
   --privileged            Run the container as privileged (passes
                           '--privileged' to 'docker run')
