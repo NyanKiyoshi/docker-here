@@ -8,6 +8,13 @@ Quickly run container images anywhere in the current directory!
 
 </div>
 
+**Contents:**
+
+- [Usage](#usage)
+- [Installation](#installation)
+- [Demo](#demo)
+- [Full Usage](#full-usage)
+
 
 ## Usage
 
@@ -70,6 +77,7 @@ BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
 
 ```
 Usage: docker-here [OPTIONS...] [--] IMAGE [ARGS...]
+
 docker-here - Runs a given container image in a given directory (defaults to current
 directory)
 
@@ -101,11 +109,18 @@ OPTIONS
   --                    Indicates the end of the options for docker-here.
 
 POSITIONAL ARGUMENTS
+  IMAGE   The container image to run.
   ARGS    The arguments to pass to 'docker run'.
+
+ENVIRONMENT VARIABLES
+  DOCKER_EXE_PATH   The path to the 'docker' command executable (or similar
+                    such as podman).
+
+                    Default behavior: automatically detects the command to use.
 
 EXAMPLES
     docker-here alpine ls .
-    docker-here alpine sh -uxc 'ls -l "/home/iza/Development/.dotfiles-dev/home/Tools" ; cat /etc/os-release'
+    docker-here alpine sh -uxc 'ls -l "$PWD" ; cat /etc/os-release'
     docker-here alpine --src ~/Downloads -- ls -l .
     docker-here alpine --dest /foo -- ls -l /foo
     docker-here alpine:latest@sha256:d34db33f[...] -- ls -l /foo

@@ -7,6 +7,7 @@ usage() {
 
     # Note: convention used is max line length of 80 chars.
     echo $"Usage: $name [OPTIONS...] [--] IMAGE [ARGS...]
+
 $name - Runs a given container image in a given directory (defaults to current
 directory)
 
@@ -38,11 +39,18 @@ OPTIONS
   --                    Indicates the end of the options for $name.
 
 POSITIONAL ARGUMENTS
+  IMAGE   The container image to run.
   ARGS    The arguments to pass to 'docker run'.
+
+ENVIRONMENT VARIABLES
+  DOCKER_EXE_PATH   The path to the 'docker' command executable (or similar
+                    such as podman).
+
+                    Default behavior: automatically detects the command to use.
 
 EXAMPLES
     $name alpine ls .
-    $name alpine sh -uxc 'ls -l \"$PWD\" ; cat /etc/os-release'
+    $name alpine sh -uxc 'ls -l \"\$PWD\" ; cat /etc/os-release'
     $name alpine --src ~/Downloads -- ls -l .
     $name alpine --dest /foo -- ls -l /foo
     $name alpine:latest@sha256:d34db33f[...] -- ls -l /foo"
@@ -50,7 +58,7 @@ EXAMPLES
 
 
 get_docker() {
-    supported_commands=( docker, podman )
+    supported_commands=( docker podman )
 
     for cmd in "${supported_commands[@]}"; do
         if command -v "$cmd"; then
@@ -157,7 +165,13 @@ if [[ -z "$image" ]]; then
 fi
 
 # Retrieve a docker cli command (e.g., /usr/bin/docker, or /usr/bin/podman)
-docker=$(get_docker)
+if [[ -n "${DOCKER_EXE_PATH-}" ]]; then
+    # Use the user provided executable path
+    docker="$DOCKER_EXE_PATH"
+else
+    # Auto-detect 'docker' executable path
+    docker=$(get_docker)
+fi
 
 # Use full path to avoid relative directories (may not play well
 # with some docker CLIs otherwise)

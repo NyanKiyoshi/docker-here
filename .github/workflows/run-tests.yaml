@@ -6,7 +6,7 @@ on:
       - .github/workflows/run-tests.yaml
       - tests/**
       - docker-here
-      - **/*.sh
+      - "**/*.sh"
   pull_request:
     types:
       - opened
@@ -15,30 +15,44 @@ on:
       - .github/workflows/run-tests.yaml
       - tests/**
       - docker-here
-      - **/*.sh
+      - "**/*.sh"
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    working-directory: ./tests
 
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        - macos-latest
-        - ubuntu-latest
+        include:
+          - runner_id: ubuntu-latest
 
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner_id }}
+    name: Test ${{ matrix.runner_id }}
 
-    # Give a large enough value as MacOS runners can be slow.
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        with:
+          python-version: '3.13'
+
+      - name: Install Dependencies
+        run: |
+          pip install poetry
+          poetry install --with dev
+
+      # Note: we don't use 'make test' here due to the containers
+      #       using Linux, thus we cannot test the behavior of our
+      #       script against non-Linux operating systems.
       - name: Run Tests
-        working-directory: ./tests
-        run: make
+        run: poetry run pytest .
 
