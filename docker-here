@@ -173,6 +173,11 @@ else
     docker=$(get_docker)
 fi
 
+# If we are running inside TTY, then add '-ti' to the 'docker run' arguments.
+if [[ -t 1 ]]; then
+    docker_run_args+=( -ti )
+fi
+
 # Use full path to avoid relative directories (may not play well
 # with some docker CLIs otherwise)
 src_path=$(readlink -f "$src_path")
@@ -183,7 +188,7 @@ if [[ -z "$dest_path" ]]; then
     dest_path="$src_path"
 fi
 
-"$docker" run --rm -it \
+"$docker" run --rm \
     "${docker_run_args[@]}" \
     -v "$src_path":"$dest_path" \
     --workdir "$dest_path" \
