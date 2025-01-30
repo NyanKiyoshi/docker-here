@@ -2,7 +2,7 @@
 <div align=center>
 <h1><code>docker-here</code></h1>
 
-<img src="https://github.com/user-attachments/assets/abe2dd86-adcc-46a9-8ba9-b3cd73cbc788" width=450 />
+<img src="https://github.com/user-attachments/assets/3dc11da1-3138-47b8-962a-0a9c0820b68e" width=450 />
 
 Quickly run container images anywhere in the current directory!
 
