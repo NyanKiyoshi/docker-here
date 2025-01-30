@@ -19,6 +19,6 @@ test:
 
 shell:
 	../docker-here $(docker_here_args) \
-		$(install_commands) \
+		'$(install_commands) \
 		&& bash -i'
 
