@@ -190,7 +190,7 @@ fi
 
 "$docker" run --rm \
     "${docker_run_args[@]}" \
-    -v "$src_path":"$dest_path" \
+    -v "$src_path":"$dest_path":Z,U \
     --workdir "$dest_path" \
     "$image" \
     "$@"
