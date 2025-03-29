@@ -94,17 +94,14 @@ def test_mount_paths(src: str | None, dest: str | None, expected_pwd: Path | Pos
         #   --src shouldn't be parsed by docker-here
         ([DEFAULT_IMAGE, "echo", "--src"], "--src", True),  # OK
         # Given,
-        #   - --non-existent is provided before the image name
+        #   - An unrecognized argument (--volume) is provided
         # Then,
-        #   docker-here should parse --non-existent and complain the options
-        #   is unknown.
-        (["--non-existent", DEFAULT_IMAGE, "echo"], "", False),  # Not OK
-        # Given,
-        #   - --non-existent is provided before '--'
-        # Then,
-        #   docker-here should parse --non-existent and complain the options
-        #   is unknown.
-        (["--non-existent", "--", DEFAULT_IMAGE, "echo"], "", False),  # Not OK
+        #   --volume should be forwarded to 'docker run'
+        (
+            ["--volume=.:/mounted", DEFAULT_IMAGE, "sh", "-c", "cd /mounted && pwd"],
+            "/mounted",
+            True,
+        ),  # OK
     ],
 )
 def test_stops_parsing_arguments(args: list[str], expected_stdout: str, is_ok: bool):
