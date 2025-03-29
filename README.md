@@ -76,7 +76,7 @@ BUG_REPORT_URL="https://gitlab.alpinelinux.org/alpine/aports/-/issues"
 ## Full Usage
 
 ```
-Usage: docker-here [OPTIONS...] [--] IMAGE [ARGS...]
+Usage: docker-here [OPTIONS...] [DOCKER_OPTIONS...] [--] IMAGE [ARGS...]
 
 docker-here - Runs a given container image in a given directory (defaults to current
 directory)
@@ -94,19 +94,19 @@ OPTIONS
 
                           Default: $PWD
 
-  --privileged            Run the container as privileged (passes
-                          '--privileged' to 'docker run')
-
-  --entrypoint COMMAND  The entrypoint to pass to 'docker run'.
-
-  --pull       POLICY   The pull policy to pass to 'docker run'.
-                        Options: always, missing, never, newer
-                                 (default: 'missing')
-
-                        Note: the actual options may vary between docker
-                              backends (e.g., docker vs podman).
-
   --                    Indicates the end of the options for docker-here.
+
+DOCKER OPTIONS
+  Any options that unrecognized by 'docker-here' will be forwarded to
+  the 'docker-run' command.
+
+  (!) Syntax must be: '--my-option=my-value' - equal signs are required
+      for any option that take an argument.
+
+  Examples:
+    docker-here --privileged alpine ls
+    docker-here --volume=/tmp:/mount-point alpine ls /mount-point
+    docker-here --pull=never my-local-image ls
 
 POSITIONAL ARGUMENTS
   IMAGE   The container image to run.
@@ -124,6 +124,7 @@ EXAMPLES
     docker-here alpine --src ~/Downloads -- ls -l .
     docker-here alpine --dest /foo -- ls -l /foo
     docker-here alpine:latest@sha256:d34db33f[...] -- ls -l /foo
+    docker-here --volume=/tmp:/mount-point alpline ls -l /mount-point
 ```
 
 [download]: https://raw.githubusercontent.com/NyanKiyoshi/docker-here/refs/heads/main/docker-here

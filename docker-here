@@ -6,7 +6,7 @@ usage() {
     name=$(basename "$0")
 
     # Note: convention used is max line length of 80 chars.
-    echo $"Usage: $name [OPTIONS...] [--] IMAGE [ARGS...]
+    echo $"Usage: $name [OPTIONS...] [DOCKER_OPTIONS...] [--] IMAGE [ARGS...]
 
 $name - Runs a given container image in a given directory (defaults to current
 directory)
@@ -24,19 +24,19 @@ OPTIONS
 
                           Default: \$PWD
 
-  --privileged            Run the container as privileged (passes
-                          '--privileged' to 'docker run')
-
-  --entrypoint COMMAND  The entrypoint to pass to 'docker run'.
-
-  --pull       POLICY   The pull policy to pass to 'docker run'.
-                        Options: always, missing, never, newer
-                                 (default: 'missing')
-
-                        Note: the actual options may vary between docker
-                              backends (e.g., docker vs podman).
-
   --                    Indicates the end of the options for $name.
+
+DOCKER OPTIONS
+  Any options that unrecognized by 'docker-here' will be forwarded to
+  the 'docker-run' command.
+
+  (!) Syntax must be: '--my-option=my-value' - equal signs are required
+      for any option that take an argument.
+
+  Examples:
+    $name --privileged alpine ls
+    $name --volume=/tmp:/mount-point alpine ls /mount-point
+    $name --pull=never my-local-image ls
 
 POSITIONAL ARGUMENTS
   IMAGE   The container image to run.
@@ -53,7 +53,8 @@ EXAMPLES
     $name alpine sh -uxc 'ls -l \"\$PWD\" ; cat /etc/os-release'
     $name alpine --src ~/Downloads -- ls -l .
     $name alpine --dest /foo -- ls -l /foo
-    $name alpine:latest@sha256:d34db33f[...] -- ls -l /foo"
+    $name alpine:latest@sha256:d34db33f[...] -- ls -l /foo
+    $name --volume=/tmp:/mount-point alpline ls -l /mount-point"
 }
 
 
@@ -103,20 +104,6 @@ while [[ $# -gt 0 ]]; do
             dest_path="$2"
             shift 2
             ;;
-        --privileged)
-            docker_run_args+=("--privileged")
-            shift
-            ;;
-        --pull)
-            peek_next "$@"
-            docker_run_args+=("--pull=$2")
-            shift 2
-            ;;
-        --entrypoint)
-            peek_next "$@"
-            docker_run_args+=("--entrypoint=$2")
-            shift 2
-            ;;
         -h | --help)
             usage
             exit 0
@@ -142,10 +129,8 @@ while [[ $# -gt 0 ]]; do
             break
             ;;
         --*)
-            # If we reach here, then we didn't find any matching option.
-            echo "Unknown option: $1" >&2
-            usage >&2
-            exit 1
+            docker_run_args+=("$1")
+            shift
             ;;
         *)
             image="$1"
