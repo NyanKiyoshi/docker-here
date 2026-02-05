@@ -159,7 +159,7 @@ else
 fi
 
 # If we are running inside a TTY, then add '-ti' to the 'docker run' arguments.
-if [[ -t 1 ]]; then
+if [[ -t 0 ]]; then
     docker_run_args+=( -ti )
 fi
 
