@@ -1,4 +1,4 @@
-import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -15,14 +15,26 @@ def run_dockerhere(*args) -> subprocess.CompletedProcess:
     )
 
 
+def _link_cmd(cmd: str, path: Path) -> None:
+    cmd_path = shutil.which(cmd)
+    if cmd_path is None:
+        raise AssertionError(f"Couldn't find {cmd!r} in PATH")
+    (path / cmd).symlink_to(cmd_path)
+
+
 @pytest.fixture
-def fake_engine(tmp_path, monkeypatch):
+def fake_engine(tmp_path: Path, monkeypatch):
+
     def _fake_engine(engine_name: str, set_env: bool = True) -> Path:
         exe = tmp_path / engine_name
-        exe.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\n')
+        exe.write_text('#!/bin/bash\nprintf "%s\\n" "$@"\n')
         exe.chmod(0o700)
         if set_env:
-            monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
+            # Link needed bash commands so they can be found in the overridden PATH
+            _link_cmd("bash", tmp_path)
+            _link_cmd("readlink", tmp_path)
+            monkeypatch.setenv("PATH", str(tmp_path))
+            monkeypatch.delenv("DOCKER_EXE_PATH", raising=False)
         return exe
 
     yield _fake_engine
