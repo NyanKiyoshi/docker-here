@@ -82,19 +82,22 @@ docker-here - Runs a given container image in a given directory (defaults to cur
 directory)
 
 OPTIONS
-  -s, --src    SRC_PATH   The directory to mount inside the container.
-                          Will be mounted under DEST_PATH.
+  --podman-log-driver  DRIVER     The logging driver to use for podman.
+                                  Default: 'none'
 
-                          Default: $PWD
+  -s, --src            SRC_PATH   The directory to mount inside the container.
+                                  Will be mounted under DEST_PATH.
 
-  -d, --dest   DEST_PATH  The location where the SRC_PATH directory will be
-                          mounted inside the remote container.
-                          Will be set as the working directory inside the
-                          container.
+                                  Default: \$PWD
 
-                          Default: $PWD
+  -d, --dest           DEST_PATH  The location where the SRC_PATH directory will be
+                                  mounted inside the remote container.
+                                  Will be set as the working directory inside the
+                                  container.
 
-  --                    Indicates the end of the options for docker-here.
+                                  Default: \$PWD
+
+  --                              Indicates the end of the options for $name.
 
 DOCKER OPTIONS
   Any options that unrecognized by 'docker-here' will be forwarded to

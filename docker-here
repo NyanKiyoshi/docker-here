@@ -12,19 +12,22 @@ $name - Runs a given container image in a given directory (defaults to current
 directory)
 
 OPTIONS
-  -s, --src    SRC_PATH   The directory to mount inside the container.
-                          Will be mounted under DEST_PATH.
+  --podman-log-driver  DRIVER     The logging driver to use for podman.
+                                  Default: 'none'
 
-                          Default: \$PWD
+  -s, --src            SRC_PATH   The directory to mount inside the container.
+                                  Will be mounted under DEST_PATH.
 
-  -d, --dest   DEST_PATH  The location where the SRC_PATH directory will be
-                          mounted inside the remote container.
-                          Will be set as the working directory inside the
-                          container.
+                                  Default: \$PWD
 
-                          Default: \$PWD
+  -d, --dest           DEST_PATH  The location where the SRC_PATH directory will be
+                                  mounted inside the remote container.
+                                  Will be set as the working directory inside the
+                                  container.
 
-  --                    Indicates the end of the options for $name.
+                                  Default: \$PWD
+
+  --                              Indicates the end of the options for $name.
 
 DOCKER OPTIONS
   Any options that unrecognized by 'docker-here' will be forwarded to
@@ -59,7 +62,7 @@ EXAMPLES
 
 
 get_docker() {
-    supported_commands=( docker podman )
+    supported_commands=( podman docker )
 
     for cmd in "${supported_commands[@]}"; do
         if command -v "$cmd"; then
@@ -91,6 +94,7 @@ image=
 docker_run_args=( )
 src_path="$PWD"
 dest_path=
+podman_log_driver=none
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -102,6 +106,11 @@ while [[ $# -gt 0 ]]; do
         -d | --dest)
             peek_next "$@"
             dest_path="$2"
+            shift 2
+            ;;
+        --podman-log-driver)
+            peek_next "$@"
+            podman_log_driver="$2"
             shift 2
             ;;
         -h | --help)
@@ -156,6 +165,10 @@ if [[ -n "${DOCKER_EXE_PATH-}" ]]; then
 else
     # Auto-detect 'docker' executable path
     docker=$(get_docker)
+fi
+
+if [[ "$docker" =~ .*podman ]]; then
+    docker_run_args+=( --log-driver="$podman_log_driver" )
 fi
 
 # If we are running inside a TTY, then add '-ti' to the 'docker run' arguments.
