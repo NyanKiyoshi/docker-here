@@ -1,0 +1,4 @@
+
+# Exclude tests from language stats
+# (https://github.com/github-linguist/linguist/blob/main/docs/overrides.md)
+tests/** linguist-documentation
