@@ -1,8 +1,9 @@
-import pytest
 import os
-import subprocess
 from pathlib import Path, PosixPath
 
+import pytest
+
+from conftest import run_dockerhere
 
 # The default "dummy" image to use in tests.
 DEFAULT_IMAGE = "docker.io/alpine:latest"
@@ -11,15 +12,6 @@ DEFAULT_IMAGE = "docker.io/alpine:latest"
 DEFAULT_PWD = Path(os.getcwd())
 
 # The path to the docker-here executable
-DOCKER_HERE_PATH = Path(__file__).parent.resolve() / ".." / "docker-here"
-
-
-def run_dockerhere(*args) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        [DOCKER_HERE_PATH, *args],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
 
 
 @pytest.mark.parametrize(
@@ -114,13 +106,13 @@ def test_stops_parsing_arguments(args: list[str], expected_stdout: str, is_ok: b
     proc = run_dockerhere(*args)
 
     if is_ok is True:
-        assert (
-            proc.returncode == 0
-        ), f"Command should have succeeded. Stderr: {proc.stderr}"
+        assert proc.returncode == 0, (
+            f"Command should have succeeded. Stderr: {proc.stderr}"
+        )
     else:
-        assert (
-            proc.returncode == 1
-        ), f"Command should have failed. {proc.stderr=} -- {proc.stdout=}"
+        assert proc.returncode == 1, (
+            f"Command should have failed. {proc.stderr=} -- {proc.stdout=}"
+        )
         assert "Unknown option: --non-existent" in proc.stderr.decode().strip()
 
     assert proc.stdout.decode().strip() == expected_stdout
